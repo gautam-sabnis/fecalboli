@@ -1,0 +1,10 @@
+Package: fecalboli
+Version: 0.1
+Date: 2022-10-03
+Title: Fecal boli 
+Description: All the analyses related to fecal boli. 
+Author: Gautam S Sabnis <gautamsabnis15@gmail.com>
+Maintainer: Gautam S Sabnis <gautamsabnis15@gmail.com>
+RoxygenNote: 7.2.1
+Encoding: UTF-8
+License: use_mit_license()
