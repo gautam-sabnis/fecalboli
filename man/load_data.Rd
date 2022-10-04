@@ -10,7 +10,9 @@ load_data(csv)
 \item{csv}{a csv file containing data per stride}
 }
 \value{
-a data frame containing the relevant fecal boli data
+a list containing two data frames
+1) df_equal: equally spaced time points
+2) df_unequal: un-equally spaced time points
 }
 \description{
 Loads the data and preprocess the features.
