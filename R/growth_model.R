@@ -21,8 +21,9 @@ growth_model <- function(data, type){
 		df_tmp$MouseID <- droplevels(df_tmp$MouseID)
 		if (type == "Gompertz"){
 
-			initVals <- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_tmp)
+			initVals <- getInitial(log(value) ~ SSgompertz(variable, Asym, b2, b3), data = df_tmp[df_tmp$MouseID %in% unique(df_tmp$MouseID)[2],])
 			gomp <- nlme(value ~ (Y_asym)*exp(-exp(-k*(variable - t_m))), data = df_tmp, random = Y_asym + k + t_m ~ 1, fixed = Y_asym + k + t_m ~ 1, start = c(Y_asym = round(initVals[[1]]), k = 1, t_m = 30), groups = ~MouseID, control = nlmeControl(msMaxIter = 1500))
+			tmp <- nls2(log(value) ~ (Y_asym)*exp(-exp(-k*(variable - t_m))), data = df_tmp[df_tmp$MouseID %in% unique(df_tmp$MouseID)[2],], start = c(Y_asym = 18, k = 1, t_m = 30), algo = "brute")
 			param_est <-  data.frame(matrix(rep(gomp$coefficients$fixed, length(unique(df_tmp$MouseID))), nrow = length(unique(df_tmp$MouseID)), ncol = 3, byrow = TRUE) + gomp$coefficients$random$MouseID)
 			param_est$MouseID <- as.factor(rownames(param_est))
 			param_est$Strain <- rep(Strains[s],nrow(param_est))

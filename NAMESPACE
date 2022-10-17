@@ -2,7 +2,9 @@
 
 export(beta)
 export(filter_data)
+export(fit_growth_model)
 export(growth_model)
 export(load_data)
 export(plot_data)
+export(plot_growth_model)
 export(plot_strain_animal)
