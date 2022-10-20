@@ -18,11 +18,16 @@ fit_growth_model <- function(data, Strain, type, shrinkage, plot){
     names(df_params) <- c("Asym", "k", "t_m")
     if (shrinkage == TRUE){
 
-        initVals <- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain)
-        fit <- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = Asym+b2+b3 ~ Sex, random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
-        fit_fe <- data.frame(Asym = rep(fixef(fit)[1], length(unique(df_Strain$MouseID))), b2 = rep(fixef(fit)[2], length(unique(df_Strain$MouseID))), b3 = rep(fixef(fit)[3], length(unique(df_Strain$MouseID))))
-        fit_beta <- fit_fe + ranef(fit)
-        df_params <- data.frame(Asym = fit_beta$Asym, k = -log(fit_beta$b3), t_m = -log(fit_beta$b2)/log(fit_beta$b3))
+        tryCatch(
+            expr = {
+                initVals <- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain)
+                fit <- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = Asym+b2+b3 ~ Sex, random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
+                fit_fe <- data.frame(Asym = rep(fixef(fit)[1], length(unique(df_Strain$MouseID))), b2 = rep(fixef(fit)[2], length(unique(df_Strain$MouseID))), b3 = rep(fixef(fit)[3], length(unique(df_Strain$MouseID))))
+                fit_beta <- fit_fe + ranef(fit)
+                df_params <- data.frame(Asym = fit_beta$Asym, k = -log(fit_beta$b3), t_m = -log(fit_beta$b2)/log(fit_beta$b3))
+                    },
+            error = function(e){cat("ERROR :",conditionMessage(e), "\n")}
+            )
     } else {
 
         for (m in 1:length(mIDs)){
@@ -49,8 +54,11 @@ fit_growth_model <- function(data, Strain, type, shrinkage, plot){
 
     }
     
+    df_params$Strain <- as.factor(rep(paste0(Strain), nrow(df_params)))
     df_params$MouseID <- mIDs
-    df_params <- df_params[,c("MouseID", "Asym", "k", "t_m")]
+    df_params$Sex <- df_Strain[!duplicated(df_Strain$MouseID), "Sex"]
+    df_params$CoatColor <- df_Strain[!duplicated(df_Strain$MouseID), "CoatColor"]
+    df_params <- df_params[,c("Strain", "MouseID", "Sex", "CoatColor","Asym", "k", "t_m")]
 
     if (plot == FALSE){
         return(df_params)

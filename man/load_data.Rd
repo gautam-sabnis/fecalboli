@@ -4,10 +4,12 @@
 \alias{load_data}
 \title{Load and preprocess data}
 \usage{
-load_data(csv)
+load_data(csv, type)
 }
 \arguments{
-\item{csv}{a csv file containing data per stride}
+\item{csv}{a csv file containing data per stride or grooming data}
+
+\item{type}{load either grooming or fecal boli data}
 }
 \value{
 a list containing two data frames
@@ -18,5 +20,6 @@ a list containing two data frames
 Loads the data and preprocess the features.
 }
 \examples{
-load_data(data = "fecalboli.csv")
+load_data(data = "fecalboli.csv", type = "fboli")
+load_data(data = "grooming.tsv", type = "grooming")
 }
