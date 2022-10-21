@@ -11,7 +11,7 @@
 #' @export 
 
 fit_growth_model <- function(data, Strain, type, shrinkage, plot){
-
+    setTimeLimit(100)
 	df_Strain <- data[data$Strain %in% Strain, ]
 	mIDs <- unique(df_Strain$MouseID)
     df_params <- data.frame(matrix(0,length(mIDs),3))
@@ -20,11 +20,11 @@ fit_growth_model <- function(data, Strain, type, shrinkage, plot){
 
         tryCatch(
             expr = {
-                initVals <- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain)
-                fit <- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = Asym+b2+b3 ~ Sex, random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
-                fit_fe <- data.frame(Asym = rep(fixef(fit)[1], length(unique(df_Strain$MouseID))), b2 = rep(fixef(fit)[2], length(unique(df_Strain$MouseID))), b3 = rep(fixef(fit)[3], length(unique(df_Strain$MouseID))))
-                fit_beta <- fit_fe + ranef(fit)
-                df_params <- data.frame(Asym = fit_beta$Asym, k = -log(fit_beta$b3), t_m = -log(fit_beta$b2)/log(fit_beta$b3))
+                initVals <<- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain)
+                fit <<- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = list(Asym+b2+b3 ~ 1), random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
+                fit_fe <<- data.frame(Asym = rep(fixef(fit)[1], length(unique(df_Strain$MouseID))), b2 = rep(fixef(fit)[2], length(unique(df_Strain$MouseID))), b3 = rep(fixef(fit)[3], length(unique(df_Strain$MouseID))))
+                fit_beta <<- fit_fe + ranef(fit)
+                df_params <<- data.frame(Asym = fit_beta$Asym, k = -log(fit_beta$b3), t_m = -log(fit_beta$b2)/log(fit_beta$b3))
                     },
             error = function(e){cat("ERROR :",conditionMessage(e), "\n")}
             )
@@ -60,8 +60,9 @@ fit_growth_model <- function(data, Strain, type, shrinkage, plot){
     df_params$CoatColor <- df_Strain[!duplicated(df_Strain$MouseID), "CoatColor"]
     df_params <- df_params[,c("Strain", "MouseID", "Sex", "CoatColor","Asym", "k", "t_m")]
 
+
     if (plot == FALSE){
-        return(df_params)
+        return(list(df_params,Asym_covariate))
     } else {
         if (shrinkage == TRUE){
                 df_fit <- augPred(fit,level=0:1)

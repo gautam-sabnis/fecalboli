@@ -61,12 +61,17 @@ plot_growth_model <- function(data, Strain, shrinkage){
 
 	df_Strain <- data[data$Strain %in% Strain, ]
 	initVals <- getInitial(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain)
-    fit <- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = Asym+b2+b3 ~ Sex, random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
+    fit <- suppressWarnings(nlme(value ~ SSgompertz(variable, Asym, b2, b3), data = df_Strain, fixed = Asym+b2+b3 ~ 1, random = pdDiag(Asym+b2+b3 ~ 1), groups = ~MouseID, control = nlmeControl(maxIter = 5000, msMaxIter = 1500)))
     fit_fe <- data.frame(Asym = rep(fixef(fit)[1], length(unique(df_Strain$MouseID))), b2 = rep(fixef(fit)[2], length(unique(df_Strain$MouseID))), b3 = rep(fixef(fit)[3], length(unique(df_Strain$MouseID))))
     fit_beta <- fit_fe + ranef(fit)
     df_params <- data.frame(Asym = fit_beta$Asym, k = -log(fit_beta$b3), t_m = -log(fit_beta$b2)/log(fit_beta$b3))
     df_params$MouseID <- unique(df_Strain$MouseID)
     df_params <- df_params[,c("MouseID", "Asym", "k", "t_m")]
+    tmp <- ranef(fit, augFrame = T)
+                
+    Asym_covariate <- plot(tmp, form = Asym ~ Sex + CoatColor)
+    b2_covariate <- plot(tmp, form = b2 ~ Sex + CoatColor)
+    b3_covariate <- plot(tmp, form = b3 ~ Sex + CoatColor)
 
     df_fit <- augPred(fit,level=0:1)
 	for (x in seq(unique(df_fit$.groups))){
@@ -75,7 +80,7 @@ plot_growth_model <- function(data, Strain, shrinkage){
 	df_fit$MouseID <- df_fit$.groups
 	p <- ggplot(df_fit, aes(x = variable, y=value)) + geom_point(data = df_fit[df_fit$.type == "original",], aes(x = variable, y=value), alpha = 0.5) + geom_line(data = df_fit[df_fit$.type == "predict.MouseID",], aes(x = variable, y = value), color = 'magenta') + geom_line(data = df_fit[df_fit$.type == "predict.fixed",], aes(x=variable, y = value), color = 'blue') + facet_wrap(.~MouseID, scales="free") + labs(x = 'Time (in mins)', y = 'Value') + ggtitle(paste0(Strain)) + theme_bw()
 
-	return(list(p, df_params))
+	return(list(p, df_params, Asym_covariate, b2_covariate, b3_covariate))
 	
 
 }
@@ -180,7 +185,7 @@ plot_signif_corr <- function(data, of_trait, growth_param){
 
 	df_agg$signif <- as.factor(ifelse(df_agg$Strain %in% df_tmp[!df_tmp$Corr == 0, "Strain"], 1, 0))
 
-	p <- ggplot(df_agg, aes(x = Asym_m, y = corner_m)) + geom_point(size = 2, stroke = 1, aes(color = signif), alpha = 0.5) + geom_errorbar(aes(ymin = corner_m - corner_s, ymax = corner_m + corner_s, color = signif), alpha = 0.3) + geom_errorbarh(aes(xmin = Asym_m - Asym_s,xmax = Asym_m + Asym_s, color = signif), alpha = 0.3) + ggrepel::geom_text_repel(data = df_agg[df_agg$signif == 1,], aes(label = Strain, color = signif, size = 5)) + scale_colour_manual(values = c("black", "red")) + theme_bw(base_size = 16) + theme(legend.position = "none") + labs(x = "Total FB Counts", y = "Periphery Time %")
+	p <- ggplot(df_agg, aes(x = Asym_m, y = corner_m)) + geom_point(size = 2, stroke = 1, aes(color = signif), alpha = 0.5) + geom_errorbar(aes(ymin = corner_m - corner_s, ymax = corner_m + corner_s, color = signif), alpha = 0.3) + geom_errorbarh(aes(xmin = Asym_m - Asym_s,xmax = Asym_m + Asym_s, color = signif), alpha = 0.3) + ggrepel::geom_text_repel(data = df_agg[df_agg$signif == 1,], aes(label = Strain, color = signif, size = 5)) + scale_colour_manual(values = c("black", "red")) + theme_bw(base_size = 16) + theme(legend.position = "none") + labs(x = paste0(growth_param), y = "Periphery Time %")
 
 	return(p)
 
