@@ -36,7 +36,7 @@ load_data <- function(csv, type){
   				df <- data[data$Strain %in% Strains[s],]
   				tmp <- list()
   				invisible(suppressMessages({(lapply(seq(nrow(df)), function(x) {
-  				tmp[[x]] <<- reshape2::melt(df[df$NetworkFilename == unique(df$NetworkFilename)[x], which(names(df) %in% c('MouseID','Sex','Strain','CoatColor',sapply(seq(60), function(x) paste0("minuteMax",x))))])}))}))
+  				tmp[[x]] <<- reshape2::melt(df[df$NetworkFilename == unique(df$NetworkFilename)[x], which(names(df) %in% c('MouseID','Sex','Strain','CoatColor', sapply(seq(60), function(x) paste0("minuteMax",x))))])}))}))
   				df_melt <- do.call(rbind,tmp)
   				df_melt$value <- as.numeric(df_melt$value)
   				df_melt$variable <- as.integer(df_melt$variable)
