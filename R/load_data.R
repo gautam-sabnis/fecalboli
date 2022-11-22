@@ -21,8 +21,11 @@ load_data <- function(csv, type){
 
 
 		} else {
-			data <- read.csv(paste0(csv), stringsAsFactors = TRUE)
-			data <- cbind(data, TestAge=as.Date(data$TestDate, format='%m/%d/%Y') - as.Date(data$DOB,format='%m/%d/%Y'))#days
+			FBdata <- read.csv(paste0(csv), stringsAsFactors = TRUE)
+			data <- FBdata[, which(names(FBdata) %in% c("NetworkFilename", "MouseID", "Strain", "Sex", "Weight", sapply(seq(60), function(x) paste0("minuteMax", x))))]
+#			data <- data[, c("Strain", "MouseID", "Sex", "Weight", sapply(seq(60), function(x) paste0("minuteMax", x)))]
+#			names(data)[names(data) %in% c(sapply(seq(60), function(x) paste0("minuteMax", x)))] <- as.factor(sapply(seq(60), function(x) x))
+			data <- cbind(data, TestAge=as.Date(FBdata$TestDate, format='%m/%d/%Y') - as.Date(FBdata$DOB,format='%m/%d/%Y'))#days
 			data <- data[!duplicated(data$MouseID),]
 			data$MouseID <- as.factor(data$MouseID)
 			Strains <- unique(data$Strain)

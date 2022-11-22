@@ -216,6 +216,61 @@ plot_growth_comparison2 <- function(data, type, plot_type = "SD"){
 	}
 }
 
+#' Plot simulated growth curves 
+#' 
+#' Plots the simulated growth curves using estimated growth 
+#' parameters for comparison 'faceted' across all strains 
+#' @param data an aggregated data frame containing estimated growth #' parameters for each strain 
+#' @param type type of plot
+#' @return a plot containing simulated growth curves for all strains 
+#' @examples 
+#' plot_growth_comparison(data = df_growth, type = "Strain")
+#' @export 
+
+plot_growth_comparison3 <- function(data, type){
+
+	if (type == "Strain"){
+		df_growth <- data
+		df_growth <- df_growth[!apply(df_growth[,-1], 1, function(r) all(r == 0.00)), ]
+		Strains <- df_growth$Strain
+		#df_sim_list <- list(list())
+		df_sim <- list()
+		x <- seq(0,60,length.out = 60)
+		for (s in 1:length(Strains)){
+			df_sim_list <- list(list())
+			#Mean - sd
+  			Asym <- df_growth[s,"Asym"] - df_growth[s,"Asym_se"]
+  			slope <- df_growth[s,"k"] - df_growth[s, "k_se"]
+  			inflection <- df_growth[s,"t_m"] - df_growth[s, "t_m_se"]
+  			df_sim_list[[1]][[1]] <- data.frame(Strain = paste0(Strains[s]), t = x, f_ms = Asym*exp(-exp(-slope*(x - inflection))))
+
+  			#Mean
+  			Asym <- df_growth[s,"Asym"]
+  			slope <- df_growth[s,"k"]
+  			inflection <- df_growth[s,"t_m"]
+  			df_sim_list[[1]][[2]] <- data.frame(f_m = Asym*exp(-exp(-slope*(x - inflection))))
+
+  			#Mean + sd
+  			Asym <- df_growth[s,"Asym"] + df_growth[s,"Asym_se"]
+  			slope <- df_growth[s,"k"] + df_growth[s, "k_se"]
+  			inflection <- df_growth[s,"t_m"] + df_growth[s, "t_m_se"]
+  			df_sim_list[[1]][[3]] <- data.frame(f_ps = Asym*exp(-exp(-slope*(x - inflection))))
+
+  			df_sim[[s]] <- do.call(cbind, df_sim_list[[1]])
+  		}
+		df_sim <- do.call(rbind, df_sim)
+		df_growth <- do.call("rbind", replicate(60, df_growth, simplify = FALSE))
+
+
+		df_sim_melt <- reshape2::melt(df_sim, id = c("Strain", "t", "f_m", "f_ms", "f_ps"))
+
+	
+		p <- ggplot(df_sim_melt, aes(x = t, y = f_m)) + geom_line() + geom_ribbon(aes(ymin = f_ms, ymax = f_ps), alpha = 0.5) + theme_bw(base_size = 16) + labs(x = "Time", y = "FBoli Count") + theme(legend.position = "none") + facet_wrap(.~Strain, scales = "free")
+		
+		return(p)
+	}
+}
+
 
 #' Plot grooming paper like plots 
 #' 
